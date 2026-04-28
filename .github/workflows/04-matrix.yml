@@ -8,9 +8,20 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        fruits: [Apple, Banana, Kiwi]
+        fruits: [Apple, Banana]
+        sizes: [Small, Large]
+        include:
+          - fruits: Apple
+            sizes: Small
+            note: "추천 조합"
+        exclude:
+          - fruits: Banana
+            sizes: Small
     steps:
-      - name: 과일 출력
+      - name: 조합 확인
         run: |
-          echo "현재과일: ${{ matrix.fruits }}"
+          echo "과일: ${{ matrix.fruits }}"
+          echo "크기: ${{ matrix.sizes }}"
+          echo "노트: ${{ matrix.note }}"
