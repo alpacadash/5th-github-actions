@@ -1,0 +1,65 @@
+name: CI Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: lint check
+        run: echo "린트 통과"
+
+  unit-test:
+    needs: lint
+    runs-on: ubuntu-latest
+    outputs:
+      passed_count: ${{ steps.count.outputs.value }}
+    steps:
+      - name: 테스트 수 집계
+        id: count
+        run: echo "value=5" >> $GITHUB_OUTPUT
+
+      - name: 테스트 결과 출력
+        run: |
+          echo "테스트 통과: 5/5"
+
+  build:
+    needs: lint
+    runs-on: ubuntu-latest
+    outputs:
+      artifact_name: ${{ steps.set-name.outputs.value }}
+    steps:
+      - name: 아티팩트 이름 생성
+        id: set-name
+        run: echo "value=myapp-${{ github.run_number }}.jar" >> $GITHUB_OUTPUT
+
+      - name: 빌드 완료
+        run: echo "빌드 완료"
+
+  deploy:
+    needs: [unit-test, build]
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'main'
+    steps:
+      - name: 배포 정보 출력
+        run: |
+          echo "테스트 통과 수: ${{ needs.unit-test.outputs.passed_count }}"
+          echo "배포 아티팩트: ${{ needs.build.outputs.artifact_name }}"
+          echo "배포 환경: production"
+
+  notify:
+    needs: [lint, unit-test, build, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: 파이프라인 결과 요약
+        run: |
+          echo "=== 파이프라인 결과 ==="
+          echo "lint: ${{ needs.lint.result }}"
+          echo "unit-test: ${{ needs.unit-test.result }}"
+          echo "build: ${{ needs.build.result }}"
+          echo "deploy: ${{ needs.deploy.result }}"
